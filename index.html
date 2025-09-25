@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Savings Goal</title>
+  <style>
+    :root{
+      --bg:#f5f7fa;
+      --card:#ffffff;
+      --muted:#9aa3ad;
+      --accent:#2b8fff;
+      --accent-2:#34d399;
+      --danger:#ff6b6b;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    
+	body{
+      background:linear-gradient(180deg,#eef3f8 0%, #f9fbfd 100%);
+      display:flex;justify-content:center;padding:14px;
+      -webkit-font-smoothing:antialiased;
+      overflow-x: hidden;
+    }
+
+    .phone {
+	  height:auto;
+	  max-height:90vh;
+	  width:100%;
+	  max-width:420px;
+      background:var(--card);
+	  border-radius:18px;
+      box-shadow:0 10px 30px rgba(15,20,30,0.12);
+	  border:1px solid rgba(0,0,0,0.04);
+      display:flex;
+	  flex-direction:column;
+	  overflow-y:auto;
+	  overflow-x:hidden;
+    }
+
+    .icon-btn{
+      width:36px;
+	  height:36px;
+	  border-radius:9px;
+	  background:transparent;
+      border:1px solid rgba(0,0,0,0.08);
+      display:inline-block;
+	  align-items:center;
+	  justify-content:center;
+      color:#252a34;
+	  font-weight:bold;
+	  font-size:20px;
+	  line-width:36;
+	  line-height:0;
+      box-shadow:0 2px 6px rgba(0,0,0,0.08);
+	  text-align:center;
+	  padding:0;
+    }
+	
+	.text-link{
+		color: var(--accent);
+		cursor: pointer;
+		font-weight: bold;
+		font-size: 16px;
+		margin-left: 12px;
+		user-select: none;
+	}
+	
+	.text-link:hover{
+	text-decoration: underline;
+	}
+
+    .icon-btn:active{ transform:scale(.98); }
+
+    .content { padding:14px;overflow-y:auto;overflow-x:hidden;flex:1;-webkit-overflow-scrolling:touch; }
+
+  .total-savings { text-align:center;padding:20px 10px;background:#f9f9f9; min-height:90px; display:flex; flex-direction:column; justify-content:center; }
+    .total-label { font-size:14px;color:#888; }
+    .total-amount { font-size:28px;font-weight:bold;margin-top:5px;color:#252a34; }
+
+    .footer-bar {
+      display:flex;justify-content:space-between;align-items:center;
+      padding:12px 16px;background:#fff;border-bottom:1px solid #eee;
+    }
+    .footer-title { font-size:18px;font-weight:bold;color:#252a34; }
+
+    .goals-list{
+      display:flex;flex-direction:column;gap:12px;align-items:center;
+      padding-bottom:12px;
+    }
+    .goal-card{
+      width:100%;
+	  max-width:420px;
+	  min-height:120px;
+	  position:relative;
+	  border-radius:12px;
+      background:linear-gradient(180deg,#fff 0%,#fbfdff 100%);
+      box-shadow:0 6px 18px rgba(8,12,20,0.06);
+      overflow:hidden;
+	  padding:30px 16px;
+      display:flex;
+	  align-items:flex-start;
+	  gap:12px;
+      border:2px solid rgba(0,0,0,0.03);
+	  box-sizing:border-box;
+    }
+	
+    .goal-card .fill{
+      position:absolute;left:0;right:0;bottom:0;height:0%;
+      background:linear-gradient(180deg,rgba(52,211,153,0.14),rgba(43,143,255,0.16));
+      z-index:0;transition:height 450ms ease;pointer-events:none;
+    }
+
+    .goal-content{ position:relative;z-index:1;width:100%;
+      display:flex;justify-content:space-between;gap:8px;align-items:flex-start;
+      flex-wrap:wrap;min-width:0; }
+    .left{ display:flex;gap:12px;align-items:center; }
+    
+	.avatar{
+      width:56px;
+	  height:56px;
+	  font-size:22px;
+	  flex:0 0 56px;
+	  border-radius:999px;
+      display:flex;
+	  align-items:center;
+	  justify-content:center;
+      color:white;
+	  font-weight:bold;
+      background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      box-shadow:0 4px 12px rgba(43,143,255,0.16);
+    }
+	
+    .meta{ display:flex;flex-direction:column; }
+    .goal-title{ font-weight:bold;color:#17202a;font-size:15px; }
+    .goal-date{ color:var(--muted);font-size:12px;margin-top:6px; }
+  .right{ text-align:right;min-width:0;flex-shrink:1;white-space:nowrap;word-break:normal; }
+    .amount-display{ font-weight:bold;color:#17202a;font-size:15px; }
+    .percent-display{ font-size:12px;color:var(--muted);margin-top:6px; }
+
+    .card-actions{ position:absolute;top:8px;right:10px;display:flex;gap:6px;z-index:2; }
+    .small{
+      background:rgba(255,255,255,0.6);border-radius:8px;
+      padding:6px 8px;font-size:12px;border:1px solid rgba(0,0,0,0.04);
+    }
+    .dragging{ opacity:0.6;transform:scale(1.02);
+      box-shadow:0 16px 40px rgba(8,12,20,0.14); }
+
+    .modal-backdrop{
+      position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(12,18,26,0.45);
+      display:none;align-items:center;justify-content:center;z-index:9999;
+    }
+    .modal{ width:92%;max-width:420px;background:var(--card);
+      border-radius:14px;padding:14px;box-shadow:0 20px 40px rgba(8,12,20,0.28); }
+    .modal h3{ margin:6px 0 12px;font-size:16px; }
+    label{ font-size:13px;color:#394145;display:block;margin-top:8px;margin-bottom:6px; }
+    input[type="text"],input[type="number"],input[type="date"]{
+      width:100%;padding:10px 12px;border-radius:10px;
+      border:1px solid rgba(0,0,0,0.06);font-size:14px;box-sizing:border-box;
+    }
+    .modal-row{
+	display:flex;
+	gap:8px;
+	margin-top:10px;
+	}
+	
+	input:disabled {
+		background-color: #f0f0f0;
+		color: #555;
+		opacity: 1;
+	}
+
+    .btn{ width:100%;padding:12px;border-radius:10px;border:none;
+      font-weight:bold;color:white;background:linear-gradient(90deg,var(--accent),var(--accent-2));
+      cursor:pointer; }
+    .btn.ghost{ background:transparent;color:var(--muted);
+      border:1px solid rgba(0,0,0,0.06);font-weight:bold; }
+    .flex{ display:flex;gap:8px; }
+    .muted-note{
+		color:var(--muted);
+		font-size:12px;
+		margin-top:8px;
+		text-align:center;
+	}
+
+    @media (max-width:380px){
+      .avatar{ width:48px;height:48px;font-size:20px;}
+      .right{ min-width:0; }
+    }
+	
+	.drag-handle {
+		width: 20px;
+		height: 40px;
+		display: grid;
+		grid-template-columns: repeat(2, 4px);
+		grid-template-rows: repeat(3, 4px);
+		gap: 4px;
+		align-items: center;
+		justify-content: center;
+		cursor: grab;
+		flex-shrink: 0;
+	}
+	
+	.drag-handle div {
+		width: 4px;
+		height: 4px;
+		background: #999;
+		border-radius: 50%;
+	}
+
+	.drag-handle:active {
+		cursor: grabbing;
+	}
+	
+	.btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	
+	.toggle-active {
+		background: linear-gradient(90deg,var(--accent),var(--accent-2));
+		color: white !important;
+	}
+	
+.section-title {
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  margin:16px 0 6px;
+  color:#222;
+}
+
+/* Floating label CSS */
+.field {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.field input {
+  width: 100%;
+  height: 44px;
+  padding: 12px;
+  font-size: 14px;
+  border: 1.5px solid rgba(0,0,0,0.1);
+  border-radius: 10px;
+  background: #fff;
+  outline: none;
+}
+
+.field label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  padding: 0 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #394145;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.field input:focus + label,
+.field input:not(:placeholder-shown) + label {
+  top: -8px;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+  </style>
+</head>
+<body>
+  <div class="phone" role="application" aria-label="Goals app">
+    <div class="total-savings">
+  <!-- <div class="total-label">Current Saved Goal / Target Saving</div> -->
+  <div id="totalAmount" class="total-amount"></div>
+    </div>
+
+    <div class="footer-bar">
+      <div class="footer-title">Goals</div>
+      <span id="btnAdd" class="text-link" title="Add goal">Add</span>
+	  <span id="saveBtnTop" class="text-link" title="Save Goals">Save</span>
+    </div>
+
+    <div class="content">
+      <div class="goals-list" id="goalsList" aria-live="polite"></div>
+    </div>
+  </div>
+
+<div id="modalBackdrop" class="modal-backdrop">
+ <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <h3 id="modalTitle">Create New Goal</h3>
+
+  <div class="modal-row">
+  <div class="field" style="flex:1">
+  </div>
+</div>
+
+<div class="sentence">
+  I want to know 
+  <select id="goalMode">
+    <option value="time">how long it will take</option>
+    <option value="amount">how much I need to save</option>
+  </select>
+  to reach my savings goal.
+</div>
+
+  <!-- Goal name -->
+  <span class="section-title">Goal name</span>
+<div class="field">
+  <input id="goalName" type="text" placeholder=" " autocomplete="off"/>
+  <label for="goalName">What are you saving for?</label>
+</div>
+
+  <!-- Target amount -->
+  <span class="section-title">Target amount (RM)</span>
+  <div class="field">
+  <input id="targetAmount" type="number" placeholder=" " min="0"/>
+  <label for="targetAmount">How much do you need?</label>
+</div>
+
+<span class="section-title">Target period (month)</span>
+<div class="field">
+  <input id="targetDate" type="number" placeholder=" " min="1" />
+  <label for="targetDate">How long will it take?</label>
+</div>
+
+  <!-- Initial saved -->
+  <span class="section-title">Initial saved (RM)</span>
+  <div class="field">
+  <input id="initialSaved" type="number" placeholder=" " min="0"/>
+  <label for="initialSaved">What’s your current saving?</label>
+</div>
+
+  <!-- Monthly saving -->
+  <span class="section-title">Monthly saving (RM/month)</span>
+  <div class="field">
+  <input id="monthlySave" type="number" placeholder=" " min="0"/>
+  <label for="monthlySave">How much do I need to save?</label>
+</div>
+  
+  <div id="goalSummary" class="muted-note" style="margin-top:8px;"></div>
+
+<div class="modal-row">
+  <button id="cancelBtn" class="btn ghost">Cancel</button>
+  <button id="resetBtn" class="btn ghost">Reset</button>
+  <button id="saveGoalBtn" class="btn">Continue</button>
+</div>
+
+</div>
+
+  <script>
+  let goals = [];
+  let unsavedChanges = false;
+  const storageKey = "goals_v4";
+
+  const btnAdd = document.getElementById("btnAdd");
+  const modal = document.getElementById("modalBackdrop");
+  const saveGoalBtn = document.getElementById("saveGoalBtn");
+  const cancelBtn = document.getElementById("cancelBtn");
+  const goalNameIn = document.getElementById("goalName");
+  const goalModeSelect = document.getElementById("goalMode");
+  const targetAmountIn = document.getElementById("targetAmount");
+  const targetDateIn = document.getElementById("targetDate");
+  const initialSavedIn = document.getElementById("initialSaved");
+  const monthlySaveIn = document.getElementById("monthlySave");
+  
+  const goalSentence = document.getElementById("goalSentence");
+
+function updateGoalSummary() {
+  const mode = goalModeSelect.value;
+  const targetAmount = parseFloat(targetAmountIn.value) || 0;
+  const initialSaved = parseFloat(initialSavedIn.value) || 0;
+  const monthlySave = parseFloat(monthlySaveIn.value) || 0;
+  const targetDate = targetDateIn.value;
+
+  let message = "";
+
+  if(mode === "time") {
+    if(monthlySave > 0 && targetAmount > 0) {
+      const monthsNeeded = Math.ceil((targetAmount - initialSaved) / monthlySave);
+      if(monthsNeeded > 0) {
+        message = `You need to save <strong>RM${monthlySave}</strong> per month for <strong>${monthsNeeded} month${monthsNeeded > 1 ? "s" : ""}</strong> to reach <strong>RM${targetAmount}</strong>.`;
+      } else {
+        message = `You need to save ... per month to reach your goal.`;
+      }
+    } else {
+  message = `You need to save <strong>RM...</strong> per month for <strong>... month</strong> to reach <strong>RM...</strong>.`;
+    }
+  } else if(mode === "amount") {
+    const monthsLeft = parseInt(targetDate) || 0;
+    if(monthsLeft > 0 && targetAmount > 0) {
+      const monthlyNeeded = Math.ceil((targetAmount - initialSaved) / monthsLeft);
+      message = `You need to save <strong>RM${monthlyNeeded}</strong> per month for <strong>${monthsLeft} month${monthsLeft > 1 ? "s" : ""}</strong> to reach <strong>RM${targetAmount}</strong>.`;
+    } else {
+      message = `You need to save <strong>RM...</strong> per month for <strong>... month</strong> to reach <strong>RM...</strong>.`;
+    }
+  } else {
+    message = "";
+  }
+
+  document.getElementById("goalSummary").innerHTML = message;
+}
+
+  monthlySaveIn.addEventListener("input", () => {
+    if(goalModeSelect.value === "time" && targetAmountIn.value && monthlySaveIn.value){
+      targetDateIn.value = calculateTargetDate(
+        parseFloat(targetAmountIn.value) || 0,
+        parseFloat(initialSavedIn.value) || 0,
+        parseFloat(monthlySaveIn.value) || 0
+      );
+    }
+    updateGoalSummary();
+  });
+
+  targetDateIn.addEventListener("input", () => {
+    if(goalModeSelect.value === "amount" && targetDateIn.value){
+      const months = parseInt(targetDateIn.value) || 0;
+      if(months > 0){
+        monthlySaveIn.value = Math.ceil((targetAmountIn.value - initialSavedIn.value) / months);
+      }
+    }
+    updateGoalSummary();
+  });
+
+  [targetAmountIn, initialSavedIn, monthlySaveIn, targetDateIn].forEach(input => {
+    input.addEventListener("input", updateGoalSummary);
+  });
+goalModeSelect.addEventListener("change", updateGoalSummary);
+
+function updateMode() {
+  const mode = goalModeSelect.value;
+
+  const targetDateField = targetDateIn.parentElement.previousElementSibling; // span label
+  const monthlySaveField = monthlySaveIn.parentElement.previousElementSibling; // span label
+
+if(mode === "time"){ 
+  targetAmountIn.disabled = false; // boleh edit
+  targetDateIn.disabled = true;    // tidak boleh edit
+  targetDateIn.value = "";
+  
+  monthlySaveIn.disabled = false;  // optional
+} else if(mode === "amount"){
+  targetAmountIn.disabled = false; // boleh edit
+  targetDateIn.disabled = false;   // user boleh masukkan month
+  monthlySaveIn.disabled = true;   // disable monthly save
+}
+}
+
+// --- mula: show/hide input fields dan label berdasarkan pilihan ---
+function updateVisibility() {
+  const mode = goalModeSelect.value;
+
+  // ambil semua section + field
+  const goalNameSection = goalNameIn.parentElement.previousElementSibling;
+  const goalNameField = goalNameIn.parentElement;
+
+  const targetAmountSection = targetAmountIn.parentElement.previousElementSibling;
+  const targetAmountField = targetAmountIn.parentElement;
+
+  const targetDateSection = targetDateIn.parentElement.previousElementSibling;
+  const targetDateField = targetDateIn.parentElement;
+
+  const monthlySaveSection = monthlySaveIn.parentElement.previousElementSibling;
+  const monthlySaveField = monthlySaveIn.parentElement;
+
+  const initialSavedSection = initialSavedIn.parentElement.previousElementSibling;
+  const initialSavedField = initialSavedIn.parentElement;
+
+  const summary = document.getElementById("goalSummary");
+  const buttonRow = document.getElementById("saveGoalBtn").parentElement;
+  const modalContainer = goalNameField.parentElement;
+
+  // sembunyikan semua dahulu
+  [goalNameSection, goalNameField,
+   targetAmountSection, targetAmountField,
+   targetDateSection, targetDateField,
+   monthlySaveSection, monthlySaveField,
+   initialSavedSection, initialSavedField].forEach(el => el.style.display = "none");
+
+  // show ikut mode
+  if(!mode) return; // semua hidden
+
+  if(mode === "time") {
+    [goalNameSection, goalNameField,
+     targetAmountSection, targetAmountField,
+     monthlySaveSection, monthlySaveField].forEach(el => el.style.display = "block");
+  } else if(mode === "amount") {
+    [goalNameSection, goalNameField,
+     targetAmountSection, targetAmountField,
+     targetDateSection, targetDateField].forEach(el => el.style.display = "block");
+  }
+
+  // initialSaved selalu visible
+  [initialSavedSection, initialSavedField].forEach(el => el.style.display = "block");
+
+  // URUTAN DOM
+  // 1. Semua input lain (goalName, targetAmount, targetDate, monthlySave) sudah di atas
+  // 2. initialSaved
+  modalContainer.insertBefore(initialSavedSection, summary);
+  modalContainer.insertBefore(initialSavedField, summary);
+
+  // 3. summary
+  modalContainer.insertBefore(summary, buttonRow);
+  // 4. buttonRow paling bawah (tidak diubah)
+}
+
+// panggil setiap kali dropdown berubah
+goalModeSelect.addEventListener("change", () => {
+  updateMode();
+  updateVisibility();
+  reorderModalFields?.(); // jika guna reorder
+  validateGoalForm(); // validasi semula
+  updateGoalSummary(); // pastikan goal summary keluar secara default
+});
+
+// panggil sekali masa modal dibuka supaya default hide/show betul
+updateVisibility();
+// --- tamat ---
+
+// Panggil setiap kali dropdown berubah
+goalModeSelect.addEventListener("change", () => {
+  updateMode();
+  updateVisibility();
+  reorderModalFields?.(); // jika guna reorder
+  validateGoalForm(); // validasi semula
+});
+
+// Panggil sekali masa modal dibuka untuk default
+updateVisibility();
+
+goalModeSelect.addEventListener("change", updateMode);
+updateMode();
+
+  // Jangan disable semua input secara default
+  targetAmountIn.disabled = false;
+  targetDateIn.disabled = false;
+	
+	goalModeSelect.addEventListener("change", (e) => {
+  const mode = e.target.value; // "amount" atau "date"
+  selectMode(mode);
+});
+
+  [goalNameIn, targetAmountIn, targetDateIn, initialSavedIn].forEach(input => {
+    input.addEventListener("input", () => { unsavedChanges = true; });
+  });
+[goalNameIn, targetAmountIn, targetDateIn, monthlySaveIn].forEach(input => {
+  input.addEventListener("input", validateGoalForm);
+});
+
+  const goalsList = document.getElementById("goalsList");
+  const createQuick = document.getElementById("createQuick");
+  const totalAmountEl = document.getElementById("totalAmount");
+
+  let draggedCard = null;
+  let suppressClick = false; // elak klik selepas drag
+
+  function uid(){ return "g_"+Math.random().toString(36).slice(2,9); }
+  function formatRM(n){ return "RM" + Number(n||0).toLocaleString(); }
+  function daysLeft(dateStr){
+    if(!dateStr) return "-";
+    const now = new Date();
+    const d = new Date(dateStr);
+    let diff = d - now;
+    if (diff < 0) return "Expired";
+    // Kira tahun, bulan, hari
+    let years = d.getFullYear() - now.getFullYear();
+    let months = d.getMonth() - now.getMonth();
+    let days = d.getDate() - now.getDate();
+    if (days < 0) {
+      months--;
+      // Dapatkan hari dalam bulan sebelumnya
+      const prevMonth = new Date(d.getFullYear(), d.getMonth(), 0);
+      days += prevMonth.getDate();
+    }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    let result = [];
+    if (years > 0) result.push(`${years} year${years > 1 ? 's' : ''}`);
+    if (months > 0) result.push(`${months} month${months > 1 ? 's' : ''}`);
+    if (days > 0) result.push(`${days} day${days > 1 ? 's' : ''}`);
+    if (result.length === 0) result.push('0 day');
+    return result.join(' ') + ' left';
+  }
+
+  function saveAll(){
+    localStorage.setItem(storageKey, JSON.stringify(goals));
+  }
+  function loadAll(){
+	const raw = localStorage.getItem(storageKey);
+	if(raw){ goals = JSON.parse(raw); }
+}
+
+  function openModal(editGoal){
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden","false");
+    saveGoalBtn.disabled = true;
+    
+    if(editGoal){
+      document.getElementById("modalTitle").textContent = "Edit Goal";
+      goalNameIn.value = editGoal.title || "";
+      targetAmountIn.value = editGoal.target || "";
+      targetDateIn.value = editGoal.date || "";
+      initialSavedIn.value = editGoal.saved || 0;
+      // Pastikan monthlySave diisi untuk mode 'how long...'
+      if (goalModeSelect.value === "time") {
+        if (typeof editGoal.monthlySave !== "undefined") {
+          monthlySaveIn.value = editGoal.monthlySave;
+        } else if (editGoal.target > 0 && editGoal.saved >= 0 && editGoal.date) {
+          // Kira monthlySave jika data cukup
+          const monthsNeeded = Math.ceil((editGoal.target - editGoal.saved) / ((editGoal.date - Date.now())/(1000*60*60*24*30)));
+          monthlySaveIn.value = monthsNeeded > 0 ? monthsNeeded : "";
+        } else {
+          monthlySaveIn.value = "";
+        }
+      } else {
+        monthlySaveIn.value = "";
+      }
+      saveGoalBtn.dataset.editId = editGoal.id;
+      validateGoalForm();
+    } else {
+      document.getElementById("modalTitle").textContent = "Create New Goal";
+      goalNameIn.value = ""; targetAmountIn.value = ""; targetDateIn.value = ""; initialSavedIn.value = "";
+      delete saveGoalBtn.dataset.editId;
+    }
+    updateGoalSummary(); // pastikan goal summary keluar secara default
+    setTimeout(()=> goalNameIn.focus(), 200);
+  }
+  function closeModal(){
+	modal.style.display = "none";
+	modal.setAttribute("aria-hidden","true");
+}
+  
+function validateGoalForm() {
+  const mode = goalModeSelect.value;
+
+  let isValid = false;
+
+  if(mode === "time") { // how long it will take
+    isValid =
+      goalNameIn.value.trim() !== "" &&
+      targetAmountIn.value.trim() !== "" &&
+      monthlySaveIn.value.trim() !== "";
+  } else if(mode === "amount") { // how much I need to save
+    isValid =
+      goalNameIn.value.trim() !== "" &&
+      targetAmountIn.value.trim() !== "" &&
+      targetDateIn.value.trim() !== "";
+  }
+
+  // aktifkan / fade button
+  saveGoalBtn.disabled = !isValid;
+}
+
+  function submitGoal(){
+    const title = goalNameIn.value.trim();
+    const target = parseFloat(targetAmountIn.value) || 0;
+    const date = targetDateIn.value || "";
+    const saved = parseFloat(initialSavedIn.value) || 0;
+    const monthlySave = parseFloat(monthlySaveIn.value) || 0;
+    if(!title){ alert("Please enter goal name"); return; }
+    const editId = saveGoalBtn.dataset.editId;
+    if(editId){
+      const g = goals.find(x=>x.id===editId);
+      if(g){
+        g.title = title;
+        g.target = target;
+        g.date = date;
+        g.saved = saved;
+        g.monthlySave = monthlySave;
+      }
+    } else {
+      goals.push({ id: uid(), title, target, date, saved, monthlySave });
+    }
+    unsavedChanges = true;
+    saveAll();
+    renderGoals(); // make sure totalAmount updates
+    closeModal();
+  }
+
+  function deleteGoal(id){ if(confirm("Delete this goal?")){ goals = goals.filter(g=>g.id!==id); saveAll(); renderGoals(); } }
+  function editGoal(id){ const g = goals.find(x=>x.id===id); if(g) openModal(g); }
+
+  function renderGoals(){
+    goalsList.innerHTML = "";
+
+    if(goals.length === 0){
+      const noData = document.createElement("div");
+      noData.textContent = "No data available.";
+      noData.style.color = "#888";
+      noData.style.fontSize = "14px";
+      noData.style.textAlign = "center";
+      noData.style.padding = "30px 0";
+      goalsList.appendChild(noData);
+  totalAmountEl.textContent = "";
+      return;
+    } else {
+      totalAmountEl.style.visibility = "visible";
+    }
+
+    let total = 0;
+    goals.forEach((g) => {
+      total += g.saved;
+      const percent = g.target > 0 ? Math.min((g.saved / g.target) * 100, 100) : 0;
+      const percentRounded = Math.round(percent);
+
+      const card = document.createElement("div");
+      card.className = "goal-card";
+      card.dataset.id = g.id;
+      card.draggable = true;
+      card.style.minHeight = "120px";
+
+      const fill = document.createElement("div");
+      fill.className = "fill"; fill.style.height = percentRounded + "%";
+      card.appendChild(fill);
+
+      const actions = document.createElement("div");
+      actions.className = "card-actions";
+      actions.innerHTML = `
+        <div class="small" onclick="event.stopPropagation(); editGoal('${g.id}')">✎</div>
+        <div class="small" onclick="event.stopPropagation(); deleteGoal('${g.id}')">🗑</div>`;
+      card.appendChild(actions);
+
+      const content = document.createElement("div");
+      content.className = "goal-content";
+
+      const left = document.createElement("div");
+      left.className = "left";
+
+      const dragHandle = document.createElement("div");
+      dragHandle.className = "drag-handle";
+      for (let i = 0; i < 6; i++) {
+        dragHandle.appendChild(document.createElement("div"));
+      }
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+  avatar.textContent = (g.title||"G").charAt(0).toUpperCase();
+
+      const meta = document.createElement("div");
+      // Kira days left jika tiada tarikh target
+      let goalDateText = "";
+      if (g.date) {
+        goalDateText = daysLeft(g.date);
+      } else {
+        // Cuba kira dari bulan yang diperlukan
+        let monthsNeeded = 0;
+        if (g.target > 0 && g.saved >= 0 && g.monthlySave > 0) {
+          monthsNeeded = Math.ceil((g.target - g.saved) / g.monthlySave);
+        }
+        if (monthsNeeded > 0) {
+          const now = new Date();
+          const targetDate = new Date(now.getFullYear(), now.getMonth() + monthsNeeded, now.getDate());
+          goalDateText = daysLeft(targetDate);
+        } else {
+          goalDateText = "-";
+        }
+      }
+      meta.className = "meta"; meta.innerHTML = `<div class="goal-title">${g.title}</div>
+                        <div class="goal-date">${goalDateText}</div>`;
+      left.appendChild(dragHandle); left.appendChild(avatar); left.appendChild(meta);
+
+      const right = document.createElement("div");
+      right.className = "right";
+  right.innerHTML = `<div class="amount-display">${formatRM(g.saved)} of ${formatRM(g.target)}</div>
+         <div class="percent-display">${percentRounded}%</div>`;
+
+      content.appendChild(left); content.appendChild(right);
+      card.appendChild(content);
+
+      // Click: hanya jalankan edit kalau bukan selepas drag
+      card.addEventListener("click", (e) => {
+        if (suppressClick) {
+          // reset flag and ignore this click
+          suppressClick = false;
+          return;
+        }
+        editGoal(g.id);
+      });
+
+      // Per-card dragstart/dragend (lebih reliable)
+      card.addEventListener("dragstart", (e) => {
+	
+        draggedCard = card;
+        card.classList.add("dragging");
+        suppressClick = true;
+        try { e.dataTransfer.setData("text/plain", card.dataset.id); } catch(err) { /* ignore */ }
+        e.dataTransfer.effectAllowed = "move";
+      });
+
+      card.addEventListener("dragend", (e) => {
+        card.classList.remove("dragging");
+        draggedCard = null;
+        // beri masa singkat sebelum allow click semula
+        setTimeout(()=> { suppressClick = false; }, 0);
+        saveNewOrder();
+      });
+
+      goalsList.appendChild(card);
+    });
+
+    // Cari jumlah target saving
+    let totalTarget = 0;
+    goals.forEach((g) => {
+      totalTarget += g.target || 0;
+    });
+    totalAmountEl.textContent = `${formatRM(total)} / ${formatRM(totalTarget)}`;
+  }
+
+  function bindTap(el, handler){
+    if(!el) return;
+    el.addEventListener("click", handler);
+    el.addEventListener("touchstart", (e)=>{ e.preventDefault(); handler(); }, {passive:false});
+  }
+  bindTap(btnAdd, ()=> openModal());
+  bindTap(createQuick, ()=> openModal());
+  bindTap(saveGoalBtn, submitGoal);
+  bindTap(cancelBtn, ()=> closeModal());
+
+const resetBtn = document.getElementById("resetBtn");
+
+bindTap(resetBtn, () => {
+  // kosongkan semua input
+  goalNameIn.value = "";
+  targetAmountIn.value = "";
+  targetDateIn.value = "";
+  initialSavedIn.value = "";
+  monthlySaveIn.value = "";
+  // kekalkan mode semasa
+  // goalModeSelect.value tidak diubah
+
+  // sembunyikan semua field ikut mode semasa
+  updateMode();
+  updateVisibility();
+  reorderModalFields?.(); // jika guna reorder untuk urutan
+  updateGoalSummary(); // pastikan goal summary keluar
+});
+
+
+  loadAll(); renderGoals();
+  modal.addEventListener("click", (e)=>{ if(e.target===modal) closeModal(); });
+  window.addEventListener("keydown", (e)=>{ if(e.key==="Escape" && modal.style.display==="flex") closeModal(); });
+  document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="hidden") saveAll(); });
+
+  // save as HTML (tidak diubah)
+  function generateHTML() {
+    const doc = document.documentElement.cloneNode(true);
+    const scriptTag = doc.querySelector("script");
+    if (scriptTag) {
+      let jsCode = scriptTag.innerHTML;
+      jsCode = jsCode.replace(
+        /const storageKey = "goals_v4";/,
+        `const storageKey = "goals_v4"; goals = ${JSON.stringify(goals, null, 2)};`
+      );
+      scriptTag.innerHTML = jsCode;
+    }
+
+    const content = "<!DOCTYPE html>\n" + doc.outerHTML;
+    const blob = new Blob([content], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "saving_goals.html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    unsavedChanges = false;
+  }
+
+  document.getElementById("saveBtnTop").addEventListener("click", function() {
+    generateHTML();
+    alert("✅ File saved. You can now exit safely.");
+  });
+
+  // dragover pada container (kekalkan)
+  goalsList.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    const afterElement = getDragAfterElement(goalsList, e.clientY);
+    const current = draggedCard;
+    if (!current) return;
+    if (afterElement == null) {
+      goalsList.appendChild(current);
+    } else {
+      goalsList.insertBefore(current, afterElement);
+    }
+  });
+
+	function getDragAfterElement(container, y) {
+		const elements = [...container.querySelectorAll(".goal-card:not(.dragging)")];
+		let closest = null;
+		let closestOffset = Number.NEGATIVE_INFINITY;
+		
+		elements.forEach((child) => {
+			const box = child.getBoundingClientRect();
+			const offset = y - (box.top + box.height / 2);
+			if (offset < 0 && offset > closestOffset) {
+				closestOffset = offset;
+				closest = child;
+			}
+		});
+		
+		return closest;
+	}
+	
+  function saveNewOrder() {
+    const ids = [...goalsList.querySelectorAll(".goal-card")]
+      .map(el => el.dataset.id);
+    // update array ikut urutan DOM
+    goals = ids.map(id => goals.find(g => g.id === id));
+    saveAll();
+    // jangan panggil renderGoals() di sini (DOM dah betul)
+  }
+</script>
+
+</body>
+</html>
